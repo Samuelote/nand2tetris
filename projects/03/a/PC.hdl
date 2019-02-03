@@ -16,5 +16,19 @@ CHIP PC {
     OUT out[16];
 
     PARTS:
-    // Put your code here:
+    //Inc16 variable
+    Inc16(in=reg, out=incout);
+    
+    //If inc
+    Mux16(a=reg, b=incout, sel=inc, out=mux1);
+
+    //If load
+    Mux16(a=mux1, b=in, sel=load, out=mux2);
+
+    //If reset
+    Mux16(a=mux2, b=false, sel=reset, out=mux3);
+
+    //loads final value to output
+    Register(in=mux3, load=true, out=reg, out=out);
+
 }
