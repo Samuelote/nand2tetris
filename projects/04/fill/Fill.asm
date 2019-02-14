@@ -12,3 +12,49 @@
 // the screen should remain fully clear as long as no key is pressed.
 
 // Put your code here.
+
+@16384
+D=A
+@SCRN_PTR
+M=D
+
+(WHITE)
+    @SCRN_PTR
+    M=M+1
+    D=M
+    A=M
+    M=0
+   @LOOP
+   0;JMP
+
+(LOOP)
+    @KBD    
+    D=A
+    @SCRN_PTR
+    D=D-M
+    @RESET_PTR
+    D;JLE
+
+    @KBD    
+    D=M
+    @WHITE
+    D;JEQ
+
+    //Colors pixel black
+   @SCRN_PTR
+    M=M+1
+    D=M
+    A=M
+    M=-1
+
+   @LOOP
+   0;JMP
+
+//Resets pointer if reached KBD
+(RESET_PTR)
+    @16384
+    D=A
+    @SCRN_PTR
+    M=D
+    @LOOP
+    0;JMP
