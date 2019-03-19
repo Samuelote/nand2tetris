@@ -9,13 +9,12 @@ class Code:
         d = '1' if 'D' in cmd else '0'
         m = '1' if 'M' in cmd else '0'
 
-        print(a+d+m)
         return a+d+m
 
     def comp(self, cmd):
+
         a = '1' if 'M' in cmd else '0'
-        print(
-            a + {
+        return a + {
                 '0': '101010',
                 '1': '111111',
                 '-1': '111010',
@@ -54,7 +53,6 @@ class Code:
                 'D|M': '010101',
                 'M|D': '010101'
             }[cmd]
-        )
 
     def jmp(self, cmd):
         return {
