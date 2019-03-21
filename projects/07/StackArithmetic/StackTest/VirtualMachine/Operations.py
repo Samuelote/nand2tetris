@@ -1,7 +1,7 @@
 
 class VM:
-
-    count = 0
+    file_name = None
+    counter = 0
     Commands = {
         "and": '@SP\n'
                'A=M-1\n'
@@ -27,7 +27,8 @@ class VM:
                '@SP\n'
                'M=M-1\n',
 
-        "or": '@SP\n'
+        "or": "//or\n"+
+            '@SP\n'
               'A=M-1\n'
               'D=M\n'
               'A=A-1\n'
@@ -39,78 +40,137 @@ class VM:
                "A=M-1\n"
                "M=-M\n",
 
-        "not": "@SP\n"
-               "A=M-1\n"
-               "D=0\n"
-               "A=M-1\n"
-               "M=D-M\n"
-               'M=M-1\n',
+        "not":"//not\n" 
+                '@0\n'
+                'D=A\n'
+                '@SP\n'
+                'A=M-1\n'
+                'M=D-M\n'
+                'M=M-1\n'
     }
 
+    outFileName=None
+    outFile =None
+
+
+    def __init__(self, file_name):
+        self.file_name = file_name;
+        self.outFileName = self.file_name.replace("vm", 'asm')
+        self.outFile = open(self.outFileName, 'w+')
 
     def push(self):
-        return ("@SP\n" +
-              "A=M\n" +
-              "M=D\n" +
-              "@SP\n" +
-              "M=M+1\n")
-
+        self.outFile.write("//push\n"
+                               "@SP\n" +
+                               "A=M\n" +
+                               "M=D\n" +
+                               "@SP\n" +
+                               "M=M+1\n")
 
     def pop(self):
-        return ("@SP\n" +
-              "A=M-1\n" +
-              "D=M\n")
+        self.outFile.write("//pop\n"
+                               "@SP\n" +
+                               "AM=M-1\n" +
+                               "D=M\n")
 
+    def WriteArithmetic(self, command):
+        self.counter += 1
 
-    def WriteArithmetic(self, cmd):
-        self.count+=1
-        command = None
-        if (cmd == "gt"):
-            command = ("@SP\n"+
-                "A=M-1\n"+
-                "D=M\n"+
-                "A=A-1\n"+
-                "D=M-D\n"+
-                "@TRUE{}\n".format(self.count) +
-                "D;JGT\n"
-                "M=0\n"
-                "@R13\n"
-                "(TRUE{})\n".format(self.count) +
-                "M= -1\n")
-
-        elif cmd == "eq":
-            command = ("@SP\n"
-                "A=M-1\n"
-                "D=M\n"
-                "A=A-1\n"
-                "D=M-D\n"
-                "@TRUE{}\n".format(self.count) +
-                "D;JEQ\n"
-                "M=0\n"
-                "@R13\n"
-                "(TRUE{})\n".format(self.count) +
-                "M= -1\n")
-
-        elif (cmd == "lt"):
-                command = ("@SP\n"
-                "A=M-1\n"
-                "D=M\n"
-                "A=A-1\n"
-                "D=M-D\n"
-                "@TRUE{}\n".format(self.count) +
-                "D;JLT\n"
-                "M=0\n"
-                "@R13\n"
-                "(TRUE{})\n".format(self.count) +
-                "M= -1\n")
-        else:
-            command = self.Commands[cmd]
-
-        print(command)
+        if command == "add":
+            self.pop()
+            self.outFile.write("//add\n" +
+                                   "@SP\n" +
+                                   "A=M-1\n" +
+                                   "D=M+D\n" +
+                                   "M=D\n")
+        elif command == "sub":
+            self.pop()
+            self.outFile.write("//sub\n" +
+                                   "@SP\n" +
+                                   "A=M-1\n" +
+                                   "D=M-D\n" +
+                                   "M=D\n")
+        elif command == "and":
+            self.pop()
+            self.outFile.write("//and\n" +
+                                   "@SP\n" +
+                                   "A=M-1\n" +
+                                   "D=M&D\n" +
+                                   "M=D\n")
+        elif command == "or":
+            self.pop()
+            self.outFile.write("//or\n"
+                                   "@SP\n" +
+                                   "A=M-1\n" +
+                                   "D=M|D\n" +
+                                   "M=D\n")
+        elif command == "neg":
+            self.outFile.write("//neg\n"
+                                   "@SP\n" +
+                                   "A=M-1\n" +
+                                   "M=-M\n")
+        elif command == "not":
+            self.outFile.write("//not\n"
+                                   "@SP\n" +
+                                   "A=M-1\n" +
+                                   "M=-M\n" +
+                                   "M=M-1\n")
+        elif command == "eq":
+            self.pop()
+            self.outFile.write("//eq\n"
+                                   "@SP\n" +
+                                   "A=M-1\n" +
+                                   "D=M-D\n" +
+                                   "@TRUE{}\n".format(self.counter) +
+                                   "D;JEQ\n" +
+                                   "@SP\n" +
+                                   "A=M-1\n" +
+                                   "M=0\n" +  # false
+                                   "@CONTINUE{}\n".format(self.counter) +
+                                   "0;JMP\n" +
+                                   "(TRUE{})\n".format(self.counter) +
+                                   "@SP\n" +
+                                   "A=M-1\n" +
+                                   "M=-1\n" +
+                                   "(CONTINUE{})\n".format(self.counter))
+        elif command == "gt":
+            self.pop()
+            self.outFile.write("//gt\n"
+                                   "@SP\n" +
+                                   "A=M-1\n" +
+                                   "D=M-D\n" +
+                                   "@TRUE{}\n".format(self.counter) +
+                                   "D;JGT\n" +
+                                   "@SP\n" +
+                                   "A=M-1\n" +
+                                   "M=0\n" +  # false
+                                   "@CONTINUE{}\n".format(self.counter) +
+                                   "0;JMP\n" +
+                                   "(TRUE{})\n".format(self.counter) +
+                                   "@SP\n" +
+                                   "A=M-1\n" +
+                                   "M=-1\n" +
+                                   "(CONTINUE{})\n".format(self.counter))
+        elif command == "lt":
+            self.pop()
+            self.outFile.write("//lt\n"
+                                   "@SP\n" +
+                                   "A=M-1\n" +
+                                   "D=M-D\n" +
+                                   "@TRUE{}\n".format(self.counter) +
+                                   "D;JLT\n" +
+                                   "@SP\n" +
+                                   "A=M-1\n" +
+                                   "M=0\n" +  # false
+                                   "@CONTINUE{}\n".format(self.counter) +
+                                   "0;JMP\n" +
+                                   "(TRUE{})\n".format(self.counter) +
+                                   "@SP\n" +
+                                   "A=M-1\n" +
+                                   "M=-1\n" +
+                                   "(CONTINUE{})\n".format(self.counter))
 
 
     def WritePushPop(self, type, segment, idx):
-
         seg = None
         if (segment != None):
             seg = {
@@ -127,36 +187,66 @@ class VM:
         if (type == "push"):
 
             if seg == "CONSTANT":
-                print(
+                self.outFile.write(
                     "@{}\n".format(idx) +
                     "D=A\n"
-                    +self.push()
                 )
-            else:
-                print(
-                    "@{}\n".format(idx)+
+
+            elif seg == "LCL" or seg == "ARG" or seg == "THIS" or seg == "THAT":
+                self.outFile.write("@{}\n".format(seg)+
+                      "D=M\n"
+                )
+            elif seg == "STATIC":
+                self.outFile.write(
+                    "@{}.{}\n".format(self.file_name, idx) +
                     "D=A\n"
-                    "@{}\n".format(seg)+
-                    "A=A+D \n"  #ADDS IDX AND SEGMENT TO GET PROPER CELLL
-                    "D=M\n"
-                    + self.push()
                 )
+                idx = 0
+
+            elif seg == "POINTER":
+                    self.outFile.write("@R3\n" + "D=A\n")
+
+            elif seg == "TEMP":
+                self.outFile.write("@R5\n"
+                      "D=A\n"
+                )
+
+            if seg != "CONSTANT":
+                self.outFile.write("@{}\n".format(idx)+
+                                   "A=D+A\n"
+                                   "D=M\n"
+                                   )
+            self.push()
 
         elif (type == "pop"):
-            print(
-                "@{} \n".format(idx)+
-                "D=A \n"
-                "@{} \n".format(seg)+
-                "A=A+D \n"  #ADDS IDX AND SEGMENT TO GET PROPER CELLL
-                "D=M\n" 
-                
-                "@R13\n"
-                "M=D\n" #ASSIGNS R13 TO SEGMENT INDEX
 
-                +self.pop()+ #PUSHES TOP OF STACK TO D
-
-                "@R13\n" 
-                "A=D\n") #ASSIGNS SEGMENT INDEX TO TOP OF STACK
-        else:
-            self.WriteArithmetic(type)
-
+            if seg == "LCL":
+                self.outFile.write("@{}\n".format("LCL") +
+                                       "D=M\n")
+            elif seg == "ARG":
+                self.outFile.write("@{}\n".format("ARG") +
+                                       "D=M\n")
+            elif seg == "THIS":
+                self.outFile.write("@{}\n".format("THIS") +
+                                       "D=M\n")
+            elif seg == "THAT":
+                self.outFile.write("@{}\n".format("THAT") +
+                                       "D=M\n")
+            elif seg == "POINTER":
+                self.outFile.write("@{}\n".format("R3") +
+                                       "D=A\n")
+            elif seg == "TEMP":
+                self.outFile.write("@{}\n".format("R5") +
+                                       "D=A\n")
+            elif seg == "STATIC":
+                self.outFile.write("@{}\n".format(self.file_name + "." + idx) +
+                                       "D=A\n")
+                idx = 0
+            self.outFile.write("@{}\n".format(idx) +
+                                   "D=D+A\n" +
+                                   "@R13\n" +
+                                   "M=D\n")
+            self.pop()
+            self.outFile.write("@R13\n" +
+                                   "A=M\n" +
+                                   "M=D\n")

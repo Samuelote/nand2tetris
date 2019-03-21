@@ -11,11 +11,12 @@ segments = {
     "THIS": [],
     "THAT": [],
 }
-file = open("test.vm", "r")
+file = open("StackTest.vm", "r")
 lines = file.readlines()
 
 
 def handle(line):
+    line = line.strip()
     # gets rid of newline characters
     if "\n" in line:
         line = line.replace("\n", "")
@@ -26,20 +27,22 @@ def handle(line):
     else:
         return line
 
-VM = VM()
+VM = VM("StackTest.vm")
 for line in lines:
     line = handle(line)
 
-    if len(line)>3:
+    if line == "" or line[0] == "/":
+        pass
+    elif line[0] == "p":
         split = line.split(" ")
         cmd = split[0]
         seg = split[1]
         idx = split[2]
         VM.WritePushPop(cmd,seg,idx)
-    elif len(line)>1:
+    else:
         split = line.split(" ")
         cmd = split[0]
-        VM.WritePushPop(cmd,None,None)
+        VM.WriteArithmetic(cmd)
 
 # VM.WritePushPop("eq",None, None)
 # VM.WritePushPop('pop','constant',3)
